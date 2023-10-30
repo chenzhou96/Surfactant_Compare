@@ -5,7 +5,7 @@
 ### 输入
 1. run.py中需要输入的变量为PATH, FLAG, COLUMN_INDEX, SKIP_ROW
 2. PATH: str 指定文件夹的路径
-3. FLAG: str 选择数据类型，只有‘PDA_max’, ‘PDA_single’, ‘nmr’三种格式可选
+3. FLAG: str 选择波谱数据格式，只有‘PDA_max’, ‘PDA_single’, ‘nmr’三种格式可选
 4. COLUMN_INDEX: int 文件中有效数据所在列
 5. SKIP_ROW: int 文件中需要跳过的数据开头行数
 
