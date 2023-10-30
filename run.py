@@ -9,7 +9,7 @@ if __name__ == '__main__':
 # 参数设置
 ##注意事项：
 ##1. 文件为csv格式 数据间隔符号为,
-    PATH = "C:\\Users\\06427\\Desktop\\项目_试剂化学成分对比V1.0\\相似度算法\\Triton"
+    PATH = "C:\\Users\\06427\\Desktop\\项目_试剂化学成分对比V1.0\\数据分析算法\\Triton"
     # PATH读取指定的文件夹位置 windows系统下需要使用\\代替路径中的\
     FLAG = 'PDA_single'
     # FLAG单引号内可选内容为 PDA_max, PDA_single, nmr 分别对应PDA最大值光谱,PDA单波长光谱,核磁谱图
