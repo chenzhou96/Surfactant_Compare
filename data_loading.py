@@ -61,7 +61,7 @@ def _read_PDA_max_data(path: Path, filename: str, skip_row: int) -> np.ndarray:
 
     return PDA_data
 
-def _zip_data(csvdata: np.ndarray, n = 1000) -> np.ndarray:
+def _zip_data(csvdata: np.ndarray, n) -> np.ndarray:
     """
     压缩数据量
     返回横坐标数据点为n的新数据
@@ -82,13 +82,11 @@ def _zip_data(csvdata: np.ndarray, n = 1000) -> np.ndarray:
 
     return zipdata
 
-def _select_x_axis(csvdata: np.ndarray, x_axis: tuple) -> np.ndarray:
+def _select_x_axis(csvdata: np.ndarray, x_left: float, x_right: float) -> np.ndarray:
     """
     选择谱图的x轴范围
     返回二维ndarray数组
     """
-
-    x_left, x_right = x_axis[0], x_axis[1]
     
     if x_left > x_right:
         x_max, x_min = x_left, x_right
@@ -102,25 +100,54 @@ def _select_x_axis(csvdata: np.ndarray, x_axis: tuple) -> np.ndarray:
     
     return np.array(new_csvdata)
 
-def read_all_data(path: Path, column_index: int, skip_row: int, flag: str, x_axis: tuple) -> dict:
+def _find_datum(data: np.ndarray, x_label, x_gap) -> int:
     """
-    读取路径文件夹内所有csv文件内容
-    返回文件名和文件内容构成的字典
+    在给定的x轴范围内找峰 返回基准点位置 从0开始计数
+    """
+
+    
+
+def read_all_data(path: Path, flag: str, **args) -> dict:
+    """
+    读取路径文件夹内所有csv文件内容\n
+    返回文件名和文件内容构成的字典\n
+    **args\n
+    column_index (int): read the target column in csv file\n
+    skip_row (int): the number of ignored head rows in csv file\n
+    x_left (float): select the range of x axis\n
+    x_right (float): select the range of x axis\n
+    x_label (float): select the datum point\n
+    x_gap (float): select the deviation of datum point\n 
     """
     
     alldata = dict()
     filenames = _read_filenames(path)
 
-    if flag == 'nmr' or 'PDA_single':
+    data_point_number = 0
+
+    if flag == 'nmr':
         for filename in filenames:
-            single_data = _select_x_axis(_read_csv_data(path, filename, column_index, skip_row)) # column根据文件格式修改
-            alldata[filename] = single_data
+            read_data = _read_csv_data(path, filename, args['column_index'], args['skip_row'])
+            selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
+            if not data_point_number:
+                data_point_number = int((selected_data.shape[0]) / 10)
+            zipped_data = _zip_data(selected_data, data_point_number)
+            alldata[filename] = zipped_data
+
+    elif flag == 'PDA_single':
+        for filename in filenames:
+            read_data = _read_csv_data(path, filename, args['column_index'], args['skip_row'])
+            selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
+            alldata[filename] = selected_data
+
     elif flag == 'PDA_max':
         for filename in filenames:
-            single_data = _select_x_axis(_read_PDA_max_data(path, filename, skip_row))
-            alldata[filename] = single_data
+            read_data = _read_PDA_max_data(path, filename, args['skip_row'])
+            selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
+            alldata[filename] = selected_data
+
     else:
-        print(f'**********\n{flag}格式不存在 请重新输入参数\n**********')
+        print(f'**********\n{flag}格式不存在 请重新输入FLAG参数\n**********')
         exit()
     
     return alldata
