@@ -7,20 +7,21 @@ import similarity_calculation as sc
 # 参数设置
 ##注意事项：
 ##1. 文件为csv格式 数据间隔符号为英文逗号(,) 数据第一列必须代表谱图x轴
-PATH = "C:\\Users\\06427\\Desktop\\Tween 80  原始数据CSV"
+PATH = "C:\\Users\\06427\\Desktop\\20240409 Trtion X-114 LC重复方法调试 CSV"
 # PATH读取指定的文件夹位置 windows系统下需要使用\\代替路径中的\
-FLAG = 'nmr'
+FLAG = 'PDA_single'
 # FLAG单引号内可选内容为 PDA_max, PDA_single, nmr 分别对应PDA最大值光谱,PDA单波长光谱,核磁谱图
 SKIP_ROW = 0
 # SKIP_ROW表示需要跳过的数据开头行数
 COLUMN_INDEX = 2
 # 当FLAG内容为PDA_single或nmr时 COLUMN_INDEX需要调整到数据所在列 比如数据在第二列则COLUMN_INDEX = 2
-X_LEFT = 6
-X_RIGHT = -0.1
+X_LEFT = 0
+X_RIGHT = 50
 # X_LEFT和X_RIGHT框选出谱图需要进行对比的x轴范围
-X_LABEL = 0
+X_LABEL = 1
 X_GAP = 0.1
 # X_LABEL用于作为基准点对齐谱图 比如nmr数据中选择化学位移为0的TMS峰 液相色谱数据中选择溶剂峰/倒峰的出峰时间
+# PDA数据暂不需要设置这两个参数！！！
 # 程序会在x轴以X_LABEL为中心 左右宽度X_GAP的范围内寻找峰值位置作为基准点
 '''注意! X_LABEL和X_GAP选出的区间要在X_LEFT和X_RIGHT的区间内'''
 # 设置结束
@@ -71,9 +72,19 @@ if __name__ == '__main__':
                                    x_label = X_LABEL,
                                    x_gap = X_GAP
                                    )
+    
+    # dataPath = path / 'newfile'
+    # for key, value in origin_data.items():
+    #     filePath = dataPath / key
+    #     with open(filePath, 'w', newline='') as csvfile:
+    #         writer = csv.writer(csvfile)
+    #         for item in value:
+    #             writer.writerow([item])
+
     # 生成的 origin_data 数据已经过标准化 类型为dict
     # key 为文件名称
-    # value 为二维array数组 有且仅有两列数据 第一列代表x轴 第二列代表y轴
+    # value 为一维array数组 代表谱图的y轴
+    
     if origin_data:
         results = sc.pairwise_comparsion(origin_data)
         compared_data_path = _output_name(path, 'output_compared_data')
@@ -102,6 +113,8 @@ if __name__ == '__main__':
     else:
         print("**********\nPCA分析失败!\n**********")
         exit()
+    
+    
 
     # ******Time consumption statistics******
     # profiler.stop()

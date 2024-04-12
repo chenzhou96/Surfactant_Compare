@@ -1,4 +1,4 @@
-import os
+import os, sys
 import re
 import numpy as np
 from pathlib import Path
@@ -37,7 +37,7 @@ def _read_csv_data(path: Path, filename: str, column_index: int, skip_row: int) 
         return np.loadtxt(path, delimiter=',', skiprows=skip_row, usecols=(0, column_index)) # delimiter根据文件格式修改
     except Exception as error:
         print(f'**********\n{filename} read failed\nError: {error}\n**********')
-        return None
+        exit()
     
 def _read_PDA_max_data(path: Path, filename: str, skip_row: int) -> np.ndarray:
     """
@@ -50,7 +50,7 @@ def _read_PDA_max_data(path: Path, filename: str, skip_row: int) -> np.ndarray:
         # data为二维数组 第一列为时间 其他列为不同波段的吸光度
     except Exception as error:
         print(f'**********\n{filename} read failed\nError: {error}\n**********')
-        return None
+        exit()
     
     rows = data.shape[0]
     PDA_data = np.empty((rows, 2))
@@ -93,19 +93,50 @@ def _select_x_axis(csvdata: np.ndarray, x_left: float, x_right: float) -> np.nda
     else:
         x_max, x_min = x_right, x_left
 
-    new_csvdata = list()
-    for item in csvdata:
-        if item[0] > x_min and item[0] < x_max:
-            new_csvdata.append(item)
-    
-    return np.array(new_csvdata)
+    row1 = csvdata[:, 0]
+    row2 = csvdata[:, 1]
+    bool_matrix = (row1 > x_min) & (row1 < x_max) # 选择合适x轴范围的布尔矩阵
+    new_csvdata =  np.array([row1[bool_matrix], row2[bool_matrix]])
 
-def _find_datum(data: np.ndarray, x_label, x_gap) -> int:
+    return new_csvdata.T
+
+    # new_csvdata = list()
+    # for item in csvdata:
+    #     if item[0] > x_min and item[0] < x_max:
+    #         new_csvdata.append(item)
+    
+    # return np.array(new_csvdata)
+
+def _find_datum(csvdata: np.ndarray, x_label, x_gap) -> int:
     """
-    在给定的x轴范围内找峰 返回基准点位置 从0开始计数
+    在给定的x轴范围内找峰 返回基准点距左右两端的距离
     """
 
+    data = _select_x_axis(csvdata, x_label - x_gap, x_label + x_gap)
+
+    dataRows = data.shape[0]
+    csvdataRows = csvdata.shape[0]
+    maxY = minY = data[0, 1]
+    median = np.median(data[:, 1])
+
+    for index in range(dataRows):
+        if maxY < data[index, 1]:
+            maxY = data[index, 1]
+            maxX = data[index, 0]
+        if minY > data[index, 1]:
+            minY = data[index, 1]
+            minX = data[index, 0]
     
+    for index in range(csvdataRows):
+        if maxX == csvdata[index, 0]:
+            max_index = index
+        if minX == csvdata[index, 0]:
+            min_index = index
+    
+    if (maxY - median) > (median - minY):
+        return [max_index, csvdataRows - max_index - 1]
+    else:
+        return [min_index, csvdataRows - min_index - 1]
 
 def read_all_data(path: Path, flag: str, **args) -> dict:
     """
@@ -120,25 +151,45 @@ def read_all_data(path: Path, flag: str, **args) -> dict:
     x_gap (float): select the deviation of datum point\n 
     """
     
-    alldata = dict()
+    alldata = dict() # key为文件名称 value为谱图y轴数据
+    datumData = dict()
     filenames = _read_filenames(path)
 
     data_point_number = 0
+    minLeftDistance = minRightDistance = sys.maxsize
 
     if flag == 'nmr':
         for filename in filenames:
             read_data = _read_csv_data(path, filename, args['column_index'], args['skip_row'])
             selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
+            
+            # 以第一个谱图的数据为基准 确定数据压缩量
             if not data_point_number:
                 data_point_number = int((selected_data.shape[0]) / 10)
             zipped_data = _zip_data(selected_data, data_point_number)
+
+            leftDistance, rightDistance = _find_datum(zipped_data, args['x_label'], args['x_gap'])
+            if leftDistance < minLeftDistance:
+                minLeftDistance = leftDistance
+            if rightDistance < minRightDistance:
+                minRightDistance = rightDistance
             alldata[filename] = zipped_data
+            datumData[filename] = leftDistance
 
     elif flag == 'PDA_single':
         for filename in filenames:
             read_data = _read_csv_data(path, filename, args['column_index'], args['skip_row'])
             selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
-            alldata[filename] = selected_data
+
+            # 以第一个谱图的数据为基准 确定数据压缩量
+            if not data_point_number:
+                data_point_number = int((selected_data.shape[0]) / 10)
+            zipped_data = _zip_data(selected_data, data_point_number)
+
+            alldata[filename] = zipped_data[:, 1]
+        
+        # 直接返回 暂不增加对齐步骤
+        return alldata
 
     elif flag == 'PDA_max':
         for filename in filenames:
@@ -147,17 +198,23 @@ def read_all_data(path: Path, flag: str, **args) -> dict:
             alldata[filename] = selected_data
 
     else:
-        print(f'**********\n{flag}格式不存在 请重新输入FLAG参数\n**********')
+        print(f'**********\n{flag}格式不存在 请选择正确的FLAG参数\n**********')
         exit()
-    
-    return alldata
+
+    wellBehavedData = dict()
+    for key, value in alldata.items():
+        datumIndex = datumData[key]
+        wellBehavedData[key] = value[datumIndex - minLeftDistance:datumIndex + minRightDistance + 1, 1]
+
+    # print([minLeftDistance, minRightDistance])    
+    return wellBehavedData
 
 if __name__ == "__main__":
     pass
 
     path = Path('C:\\Users\\06427\\Desktop\\Tween 80  原始数据CSV')
     filename = '1.csv'
-    zip_data = _zip_data(_select_x_axis(_read_csv_data(path, filename, 2, 0), (6, -0.1)))
+    zip_data = _zip_data(_select_x_axis(_read_csv_data(path, filename, 2, 0), 6, -0.1), 1000)
     zip_data_path = path / 'select_data_zip1000.csv'
     import csv
     with open(zip_data_path, 'w', newline='') as csvfile:
