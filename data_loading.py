@@ -197,6 +197,8 @@ def read_all_data(path: Path, flag: str, **args) -> dict:
             selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
             alldata[filename] = selected_data
 
+            # 待完工 参考PDA_single
+
     else:
         print(f'**********\n{flag}格式不存在 请选择正确的FLAG参数\n**********')
         exit()

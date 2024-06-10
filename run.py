@@ -2,12 +2,11 @@ import csv
 import PCA
 from pathlib import Path
 import data_loading as dl
-import similarity_calculation as sc
 
 # 参数设置
 ##注意事项：
 ##1. 文件为csv格式 数据间隔符号为英文逗号(,) 数据第一列必须代表谱图x轴
-PATH = "C:\\Users\\06427\\Desktop\\20240409 Trtion X-114 LC重复方法调试 CSV"
+PATH = "D:\\Computer_Science\\Surfactant_Compare\\测试数据_FLAG为PDA_single"
 # PATH读取指定的文件夹位置 windows系统下需要使用\\代替路径中的\
 FLAG = 'PDA_single'
 # FLAG单引号内可选内容为 PDA_max, PDA_single, nmr 分别对应PDA最大值光谱,PDA单波长光谱,核磁谱图
@@ -55,11 +54,13 @@ def _range_judgment() -> None:
 
 if __name__ == '__main__':
     
-    # ******Time consumption statistics******
-    # from pyinstrument import Profiler
-    # profiler = Profiler()
-    # profiler.start()
-    # ******Time consumption statistics******
+    '''
+    ******Time consumption statistics******
+    from pyinstrument import Profiler
+    profiler = Profiler()
+    profiler.start()
+    ******Time consumption statistics******
+    '''
 
     _range_judgment()
     path = Path(PATH)
@@ -72,51 +73,24 @@ if __name__ == '__main__':
                                    x_label = X_LABEL,
                                    x_gap = X_GAP
                                    )
-    
-    # dataPath = path / 'newfile'
-    # for key, value in origin_data.items():
-    #     filePath = dataPath / key
-    #     with open(filePath, 'w', newline='') as csvfile:
-    #         writer = csv.writer(csvfile)
-    #         for item in value:
-    #             writer.writerow([item])
 
-    # 生成的 origin_data 数据已经过标准化 类型为dict
-    # key 为文件名称
-    # value 为一维array数组 代表谱图的y轴
-    
-    if origin_data:
-        results = sc.pairwise_comparsion(origin_data)
-        compared_data_path = _output_name(path, 'output_compared_data')
-        with open(compared_data_path, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            # writer.writerow(['Sample A','Sample B','Similarity'])
-            for key, result in results.items():
-                sample_A, sample_B = key.split(',')
-                writer.writerow([sample_A, sample_B, result])
-
-        print(f'**********\n相似度分析完成!\n数据保存在{compared_data_path}\n**********')
-    else:
-        print("**********\n未读取到有效数据!\n**********")
-        exit()
-
-    pca_data = PCA.PCA_analysis(str(compared_data_path))
+    pca_data = PCA.PCA_analysis(origin_data)
     if pca_data:
         pca_data_path = _output_name(path, 'output_pca_data')
         with open(pca_data_path, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['filename', 'PCA_x', 'PCA_y'])
-            for sample_name, signgle_pca_data in zip(*pca_data):
-                writer.writerow([sample_name, *signgle_pca_data])
+            for sample_name, single_pca_data in zip(*pca_data):
+                writer.writerow([sample_name, *single_pca_data])
         
         print(f'**********\nPCA分析完成!\n数据保存在{pca_data_path}\n**********')
     else:
         print("**********\nPCA分析失败!\n**********")
         exit()
     
-    
-
-    # ******Time consumption statistics******
-    # profiler.stop()
-    # profiler.print()
-    # ******Time consumption statistics******
+    '''
+    ******Time consumption statistics******
+    profiler.stop()
+    profiler.print()
+    ******Time consumption statistics******
+    '''
