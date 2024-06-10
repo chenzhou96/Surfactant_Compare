@@ -16,6 +16,10 @@ def PCA_analysis(origin_data: dict, components = 2) -> list:
         data[name] = origin_data[name]
     data = data.T
 
+    # 把全为0的列都删除
+    all_zero_columns = data.apply(lambda x: all(x == 0))
+    data = data.drop(data.columns[all_zero_columns], axis=1)
+
     pca = decomposition.PCA(n_components=components)
     pca.fit(data.values)
     pca_data = pca.transform(data.values)

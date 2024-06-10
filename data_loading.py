@@ -138,6 +138,20 @@ def _find_datum(csvdata: np.ndarray, x_label, x_gap) -> int:
     else:
         return [min_index, csvdataRows - min_index - 1]
 
+def _normalize_data(data: np.ndarray) -> np.ndarray:
+    """
+    返回z_score归一化
+    """
+
+    z_score_data =  (data - data.mean()) / data.std()
+    _ = z_score_data * (z_score_data < 0)
+    under_zero = _.ravel()[np.flatnonzero(_)] # 提取所有小于0的数
+    baseline = np.median(under_zero) # 取中位数
+    data = z_score_data - baseline # 注意baseline是负数
+    data[data < 0] = 0
+
+    return data
+
 def read_all_data(path: Path, flag: str, **args) -> dict:
     """
     读取路径文件夹内所有csv文件内容\n
@@ -206,7 +220,7 @@ def read_all_data(path: Path, flag: str, **args) -> dict:
     wellBehavedData = dict()
     for key, value in alldata.items():
         datumIndex = datumData[key]
-        wellBehavedData[key] = value[datumIndex - minLeftDistance:datumIndex + minRightDistance + 1, 1]
+        wellBehavedData[key] = _normalize_data(value[datumIndex - minLeftDistance:datumIndex + minRightDistance + 1, 1])
 
     # print([minLeftDistance, minRightDistance])    
     return wellBehavedData
