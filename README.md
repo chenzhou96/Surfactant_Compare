@@ -1,7 +1,8 @@
 # Surfactant_Compare
 
 ## 版本
-### **skipSimilarity**
+### **onlyPDA**
+*本版本只用于PDA数据*<br>
 *本版本加工原始数据后，不计算相似度，直接用谱图的y轴信息进行PCA分析*
 
 <br>
@@ -12,7 +13,7 @@
 变量|数据类型|描述
 -|-|-
 |**PATH**|*str*|指定文件夹的路径
-**FLAG**|*str*|选择波谱数据格式，只有**PDA_max**, **PDA_single**, **nmr**三种格式可选
+**FLAG**|*str*|选择波谱数据格式，只有**PDA_max**, **PDA_single**两种格式可选
 **COLUMN_INDEX**|*int*|文件中有效数据所在列
 **SKIP_ROW**|*int*|文件中需要跳过的数据开头行数
 **X_LEFT**, **RIGHT**|*float*|需要进行对比的x轴范围

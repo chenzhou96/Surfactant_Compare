@@ -107,37 +107,6 @@ def _select_x_axis(csvdata: np.ndarray, x_left: float, x_right: float) -> np.nda
     
     # return np.array(new_csvdata)
 
-def _find_datum(csvdata: np.ndarray, x_label, x_gap) -> int:
-    """
-    在给定的x轴范围内找峰 返回基准点距左右两端的距离
-    """
-
-    data = _select_x_axis(csvdata, x_label - x_gap, x_label + x_gap)
-
-    dataRows = data.shape[0]
-    csvdataRows = csvdata.shape[0]
-    maxY = minY = data[0, 1]
-    median = np.median(data[:, 1])
-
-    for index in range(dataRows):
-        if maxY < data[index, 1]:
-            maxY = data[index, 1]
-            maxX = data[index, 0]
-        if minY > data[index, 1]:
-            minY = data[index, 1]
-            minX = data[index, 0]
-    
-    for index in range(csvdataRows):
-        if maxX == csvdata[index, 0]:
-            max_index = index
-        if minX == csvdata[index, 0]:
-            min_index = index
-    
-    if (maxY - median) > (median - minY):
-        return [max_index, csvdataRows - max_index - 1]
-    else:
-        return [min_index, csvdataRows - min_index - 1]
-
 def _normalize_data(data: np.ndarray) -> np.ndarray:
     """
     返回z_score归一化
@@ -166,31 +135,11 @@ def read_all_data(path: Path, flag: str, **args) -> dict:
     """
     
     alldata = dict() # key为文件名称 value为谱图y轴数据
-    datumData = dict()
     filenames = _read_filenames(path)
 
     data_point_number = 0
-    minLeftDistance = minRightDistance = sys.maxsize
 
-    if flag == 'nmr':
-        for filename in filenames:
-            read_data = _read_csv_data(path, filename, args['column_index'], args['skip_row'])
-            selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
-            
-            # 以第一个谱图的数据为基准 确定数据压缩量
-            if not data_point_number:
-                data_point_number = int((selected_data.shape[0]) / 10)
-            zipped_data = _zip_data(selected_data, data_point_number)
-
-            leftDistance, rightDistance = _find_datum(zipped_data, args['x_label'], args['x_gap'])
-            if leftDistance < minLeftDistance:
-                minLeftDistance = leftDistance
-            if rightDistance < minRightDistance:
-                minRightDistance = rightDistance
-            alldata[filename] = zipped_data
-            datumData[filename] = leftDistance
-
-    elif flag == 'PDA_single':
+    if flag == 'PDA_single':
         for filename in filenames:
             read_data = _read_csv_data(path, filename, args['column_index'], args['skip_row'])
             selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
@@ -200,10 +149,7 @@ def read_all_data(path: Path, flag: str, **args) -> dict:
                 data_point_number = int((selected_data.shape[0]) / 10)
             zipped_data = _zip_data(selected_data, data_point_number)
 
-            alldata[filename] = zipped_data[:, 1]
-        
-        # 直接返回 暂不增加对齐步骤
-        return alldata
+            alldata[filename] = _normalize_data(zipped_data[:, 1])
 
     elif flag == 'PDA_max':
         for filename in filenames:
@@ -211,29 +157,18 @@ def read_all_data(path: Path, flag: str, **args) -> dict:
             selected_data = _select_x_axis(read_data, args['x_left'], args['x_right'])
             alldata[filename] = selected_data
 
-            # 待完工 参考PDA_single
+            # 以第一个谱图的数据为基准 确定数据压缩量
+            if not data_point_number:
+                data_point_number = int((selected_data.shape[0]) / 10)
+            zipped_data = _zip_data(selected_data, data_point_number)
 
+            alldata[filename] = _normalize_data(zipped_data[:, 1])
+    
     else:
         print(f'**********\n{flag}格式不存在 请选择正确的FLAG参数\n**********')
         exit()
 
-    wellBehavedData = dict()
-    for key, value in alldata.items():
-        datumIndex = datumData[key]
-        wellBehavedData[key] = _normalize_data(value[datumIndex - minLeftDistance:datumIndex + minRightDistance + 1, 1])
-
-    # print([minLeftDistance, minRightDistance])    
-    return wellBehavedData
+    return alldata
 
 if __name__ == "__main__":
     pass
-
-    path = Path('C:\\Users\\06427\\Desktop\\Tween 80  原始数据CSV')
-    filename = '1.csv'
-    zip_data = _zip_data(_select_x_axis(_read_csv_data(path, filename, 2, 0), 6, -0.1), 1000)
-    zip_data_path = path / 'select_data_zip1000.csv'
-    import csv
-    with open(zip_data_path, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        for item in zip_data:
-            writer.writerow(item)
