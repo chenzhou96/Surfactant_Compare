@@ -8,12 +8,10 @@ import data_loading as dl
 ##1. 文件为csv格式 数据间隔符号为英文逗号(,) 数据第一列必须代表谱图x轴
 PATH = "D:\\Computer_Science\\Surfactant_Compare\\Test_T20_csv"
 # PATH读取指定的文件夹位置 windows系统下需要使用\\代替路径中的\
-FLAG = 'nmr'
-# FLAG单引号内可选内容为 PDA_max, PDA_single, nmr 分别对应PDA最大值光谱,PDA单波长光谱,核磁谱图
 SKIP_ROW = 0
 # SKIP_ROW表示需要跳过的数据开头行数
 COLUMN_INDEX = 2
-# 当FLAG内容为PDA_single或nmr时 COLUMN_INDEX需要调整到数据所在列 比如数据在第二列则COLUMN_INDEX = 2
+# 数据所在列 比如数据在第二列则COLUMN_INDEX = 2
 X_LEFT = 4.6
 X_RIGHT = -0.5
 # X_LEFT和X_RIGHT框选出谱图需要进行对比的x轴范围
@@ -65,7 +63,7 @@ if __name__ == '__main__':
     _range_judgment()
     path = Path(PATH)
 
-    origin_data = dl.read_all_data(path, FLAG,
+    origin_data = dl.read_all_data(path,
                                    column_index=COLUMN_INDEX,
                                    skip_row=SKIP_ROW,
                                    x_left = X_LEFT,

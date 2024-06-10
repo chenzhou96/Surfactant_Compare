@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from sklearn import decomposition
 
@@ -19,6 +18,9 @@ def PCA_analysis(origin_data: dict, components = 2) -> list:
     # 把全为0的列都删除
     all_zero_columns = data.apply(lambda x: all(x == 0))
     data = data.drop(data.columns[all_zero_columns], axis=1)
+
+    # 对data开根号 降低强信号的占比 增加弱信号的占比
+    data = data.pow(0.5)
 
     pca = decomposition.PCA(n_components=components)
     pca.fit(data.values)
