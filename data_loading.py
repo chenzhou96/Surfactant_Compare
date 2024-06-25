@@ -98,10 +98,10 @@ def _find_datum(csvdata: np.ndarray, x_label, x_gap) -> int:
     median = np.median(data[:, 1])
 
     for index in range(dataRows):
-        if maxY < data[index, 1]:
+        if maxY <= data[index, 1]:
             maxY = data[index, 1]
             maxX = data[index, 0]
-        if minY > data[index, 1]:
+        if minY >= data[index, 1]:
             minY = data[index, 1]
             minX = data[index, 0]
     
@@ -172,7 +172,8 @@ def read_all_data(path: Path, **args) -> dict:
         datumIndex = datumData[key]
         wellBehavedData[key] = _normalize_data(value[datumIndex - minLeftDistance:datumIndex + minRightDistance + 1, 1])
 
-    # print([minLeftDistance, minRightDistance])    
+    # print([minLeftDistance, minRightDistance])
+    # 对齐算法有问题 应该放到数据处理后端？20240610
     return wellBehavedData
 
 if __name__ == "__main__":

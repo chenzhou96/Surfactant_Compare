@@ -6,13 +6,13 @@ import data_loading as dl
 # 参数设置
 ##注意事项：
 ##1. 文件为csv格式 数据间隔符号为英文逗号(,) 数据第一列必须代表谱图x轴
-PATH = "D:\\Computer_Science\\Surfactant_Compare\\Test_T20_csv"
+PATH = "D:\\Computer_Science\\20240625 水峰压制"
 # PATH读取指定的文件夹位置 windows系统下需要使用\\代替路径中的\
 SKIP_ROW = 0
 # SKIP_ROW表示需要跳过的数据开头行数
 COLUMN_INDEX = 2
 # 数据所在列 比如数据在第二列则COLUMN_INDEX = 2
-X_LEFT = 4.6
+X_LEFT = 6.5
 X_RIGHT = -0.5
 # X_LEFT和X_RIGHT框选出谱图需要进行对比的x轴范围
 X_LABEL = 0
